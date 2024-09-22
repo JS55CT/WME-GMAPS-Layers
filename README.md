@@ -20,11 +20,11 @@ To install this user script, you need to have a userscript manager installed in 
 
 1. **Tampermonkey (Recommended)**
    - [Install Tampermonkey](https://www.tampermonkey.net/)
-   - [Click here to install WME GMAPS Layers](https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js)
+   - [Click here to install WME GMAPS Layers](https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js)
    
 2. **Greasemonkey**
    - [Install Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)
-   - [Click here to install WME GMAPS Layers](https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js)
+   - [Click here to install WME GMAPS Layers](https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js)
 
 ## Usage
 
