@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.09.22
+// @version      2024.09.23
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    hhttps://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -17,6 +17,18 @@
 
 (function () {
     'use strict';
+    // Debug flag
+    const isDebugMode = false; // Set to false/true to disable/enable logging
+
+    // Log the URLs of script tags that contain 'maps.googleapis.com'
+     if (isDebugMode) {
+        document.querySelectorAll('script').forEach(script => {
+            const src = script.src;
+            if (src && src.includes('maps.googleapis.com')) {
+                console.log('WME GMAPS Layers: Google Maps API Script URL:', src);
+            }
+        });
+    }
 
     const scriptName = GM_info.script.name;
     const scriptVersion = GM_info.script.version;
@@ -34,6 +46,8 @@
         if (elements.shortcutCheckbox) elements.shortcutCheckbox.checked = layerEnabled;
         if (elements.tabCheckbox) elements.tabCheckbox.checked = layerEnabled;
         googleMapsDiv.style.display = layerEnabled ? "block" : "none";
+        if (isDebugMode) console.log('WME GMAPS Layers: Layer toggled:', layerEnabled);
+
     }
 
     /**
@@ -115,6 +129,7 @@
             // Update localStorage when checkbox state changes
             localStorage.setItem(id, event.target.checked);
             updateMapStyles();
+            if (isDebugMode) console.log(`WME GMAPS Layers: ${event.target.dataset.featureType} visibility set to:`, event.target.checked);
         });
 
         const label = document.createElement('label');
@@ -156,6 +171,7 @@
 
         gmap.setOptions({ styles: [...baseStyles, ...inputStyles] });
         updateTrafficLayer();
+        if (isDebugMode) console.log('WME GMAPS Layers: Map styles updated');
     }
 
     /**
@@ -165,8 +181,10 @@
         const roadsTrafficCheckbox = document.querySelector('#road');
         if (roadsTrafficCheckbox && roadsTrafficCheckbox.checked) {
             trafficLayer.setMap(gmap); // Show traffic layer
+            if (isDebugMode) console.log('WME GMAPS Layers: Traffic layer displayed');
         } else {
             trafficLayer.setMap(null); // Hide traffic layer
+            if (isDebugMode) console.log('WME GMAPS Layers: Traffic layer hidden');
         }
         // Continuous set styles irrelevant of traffic layer visibility
         googleMapsDiv.style.pointerEvents = 'none'; // Block mouse events
@@ -195,8 +213,7 @@
         // Update Google Maps center and zoom
         gmap.panTo(new google.maps.LatLng(lonlat.lat, lonlat.lon));
         gmap.setZoom(W.map.getZoom());
-
-        console.log("Maps synchronized: Google Maps is set to", lonlat.lat, lonlat.lon);
+        if (isDebugMode) console.log("WME GMAPS Layers: Maps synchronized - Google Maps is set to", lonlat.lat, lonlat.lon);
     }
 
     /**
@@ -236,6 +253,14 @@
 
             const lonlat = getTransformedCoordinates(); // Get initial transformed coordinates
 
+            // Detect and log API key from the script URL, if available
+            const scriptTag = Array.from(document.querySelectorAll('script')).find(script => script.src.includes('maps.googleapis.com'));
+            if (scriptTag) {
+                const urlParams = new URL(scriptTag.src);
+                const apiKey = urlParams.searchParams.get('key');
+                if (isDebugMode) console.log('WME GMAPS Layers: Detected Google Maps API Key:', apiKey);
+            }
+
             gmap = new google.maps.Map(googleMapsDiv, {
                 zoom: W.map.getZoom(),
                 center: { lat: lonlat.lat, lng: lonlat.lon },
@@ -263,7 +288,7 @@
                 'WMEGoogleMapsLayers', 'Toggle Google Maps Layers', 'layers', 'layersToggleWMEGoogleMapsLayers', "Alt+G", toggleLayer, null
             ).add();
         }).catch(error => {
-            console.error("WME Google Maps Layers initialization error:", error);
+            console.error("WME GMAPS Layers: WME GMAPS Layers initialization error:", error);
         });
     }
 
