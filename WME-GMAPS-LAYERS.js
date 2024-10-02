@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.10.02
+// @version      2024.10.02.01
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -174,15 +174,15 @@
         ];
 
         const inputStyles = Array.from(document.querySelectorAll('.style-input'))
-            .filter(input => input.checked)
-            .map(input => {
-                const { featureType, elementType } = input.dataset;
-                return {
-                    "featureType": featureType,
-                    ...(elementType ? { "elementType": elementType } : {}),
-                    "stylers": [{ "visibility": "on" }]
-                };
-            });
+        .filter(input => input.checked)
+        .map(input => {
+            const { featureType, elementType } = input.dataset;
+            return {
+                "featureType": featureType,
+                ...(elementType ? { "elementType": elementType } : {}),
+                "stylers": [{ "visibility": "on" }]
+            };
+        });
 
         gmap.setOptions({ styles: [...baseStyles, ...inputStyles] });
         updateTrafficLayer();
@@ -320,7 +320,7 @@
                 'layers',
                 'layersToggleWMEGoogleMapsLayers',
                 "Alt+G",
-                toggleLayer,
+                () => toggleLayer(),
                 null
             ).add();
 
