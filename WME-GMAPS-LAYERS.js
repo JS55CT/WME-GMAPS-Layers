@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.09.23
+// @version      2024.10.02
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
-// @updateURL    hhttps://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
+// @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @license      MIT
 // @match        https://*.waze.com/*/editor*
-// @match        https://*.waze.com/editor*
+// @match        https://*.waze.com/editor
 // @exclude      https://*.waze.com/user/editor*
 // @grant        none
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
@@ -18,10 +18,10 @@
 (function () {
     'use strict';
     // Debug flag
-    const isDebugMode = false; // Set to false/true to disable/enable logging
+    const isDebugMode = true; // Set to false/true to disable/enable logging
 
     // Log the URLs of script tags that contain 'maps.googleapis.com'
-     if (isDebugMode) {
+    if (isDebugMode) {
         document.querySelectorAll('script').forEach(script => {
             const src = script.src;
             if (src && src.includes('maps.googleapis.com')) {
@@ -36,27 +36,52 @@
     let gmap, trafficLayer, googleMapsDiv;
     let layerEnabled = (localStorage.getItem(layerEnabledKey) ?? 'false') === 'true';
 
-    const elements = {};
+    let programmaticChange = false; // Flag to prevent loops during programmatic changes
+
+    const elements = {
+        toggleSwitch: null,
+        tabCheckbox: null,
+        checkboxCallback: null // Store the callback for the checkbox
+    };
 
     /**
      * Sync the layer state with the UI elements
      */
     function syncToggleState() {
-        if (elements.toggleSwitch) elements.toggleSwitch.classList.toggle('on', layerEnabled);
-        if (elements.shortcutCheckbox) elements.shortcutCheckbox.checked = layerEnabled;
-        if (elements.tabCheckbox) elements.tabCheckbox.checked = layerEnabled;
-        googleMapsDiv.style.display = layerEnabled ? "block" : "none";
-        if (isDebugMode) console.log('WME GMAPS Layers: Layer toggled:', layerEnabled);
+        if (isDebugMode) console.log('WME GMAPS Layers: syncToggleState() with value ', layerEnabled);
 
+        // Update toggle switch based on layerEnabled
+        if (elements.toggleSwitch) {
+            elements.toggleSwitch.classList.toggle('on', layerEnabled);
+            if (isDebugMode) console.log('WME GMAPS Layers: toggleSwitch updated to ', layerEnabled);
+        }
+
+        // Update the wz-checkbox value based on layerEnabled
+        if (elements.tabCheckbox) {
+            programmaticChange = true; // Indicate the change is programmatic
+            elements.tabCheckbox.checked = layerEnabled;
+            elements.tabCheckbox.value = layerEnabled ? "on" : "off";
+            // Trigger the checkbox callback to ensure the component updates
+            if (elements.checkboxCallback) {
+                elements.checkboxCallback(layerEnabled);
+            }
+            programmaticChange = false; // Reset the flag
+
+            if (isDebugMode) console.log('WME GMAPS Layers: tabCheckbox updated to ', layerEnabled);
+        }
+        // Update the visibility of the Google Maps div based on the state of layerEnabled
+        googleMapsDiv.style.display = layerEnabled ? "block" : "none";
     }
 
     /**
      * Toggle the visibility of the Google Maps layer
      */
-    function toggleLayer() {
-        layerEnabled = !layerEnabled;
-        localStorage.setItem(layerEnabledKey, layerEnabled);
-        syncToggleState();
+    function toggleLayer(checked = null) {
+        if (!programmaticChange) { // Prevent changes when the flag is set
+            layerEnabled = checked !== null ? checked : !layerEnabled;
+            localStorage.setItem(layerEnabledKey, layerEnabled);
+            syncToggleState();
+        }
     }
 
     /**
@@ -89,7 +114,7 @@
 
         const toggleSwitch = document.createElement('div');
         toggleSwitch.className = `toggle-switch${layerEnabled ? ' on' : ''}`;
-        toggleSwitch.addEventListener('click', toggleLayer);
+        toggleSwitch.addEventListener('click', () => toggleLayer());
 
         const toggleSlider = document.createElement('div');
         toggleSlider.className = 'slider';
@@ -105,10 +130,10 @@
     }
 
     /**
- * Create a feature input element for the layer settings form
- * @param {Object} options The options for the feature input
- * @returns {HTMLElement} The created feature input element
- */
+     * Create a feature input element for the layer settings form
+     * @param {Object} options The options for the feature input
+     * @returns {HTMLElement} The created feature input element
+     */
     function createFeatureInput({ featureType, elementType = null, defaultChecked, humanLabel, description }) {
         const div = document.createElement('div');
         const id = featureType.replace('.', '_') + (elementType ? '_' + elementType.replace('.', '_') : '');
@@ -151,12 +176,12 @@
     function updateMapStyles() {
         // Base styles that sets everything to 'off'
         const baseStyles = [
-            {"featureType": "administrative", "stylers": [{"visibility": "off"}]},
-            {"featureType": "poi", "stylers": [{"visibility": "off"}]},
-            {"featureType": "road", "stylers": [{"visibility": "off"}]},
-            {"featureType": "transit", "stylers": [{"visibility": "off"}]},
-            {"featureType": "landscape", "stylers": [{"visibility": "off"}]},
-            {"featureType": "water", "stylers": [{"visibility": "off"}]}
+            { "featureType": "administrative", "stylers": [{ "visibility": "off" }] },
+            { "featureType": "poi", "stylers": [{ "visibility": "off" }] },
+            { "featureType": "road", "stylers": [{ "visibility": "off" }] },
+            { "featureType": "transit", "stylers": [{ "visibility": "off" }] },
+            { "featureType": "landscape", "stylers": [{ "visibility": "off" }] },
+            { "featureType": "water", "stylers": [{ "visibility": "off" }] }
         ];
 
         // Construct styles based on the checkbox inputs, turning on what's necessary
@@ -164,8 +189,8 @@
             const { featureType, elementType } = input.dataset;
             return {
                 "featureType": featureType,
-                ...(elementType ? {"elementType": elementType} : {}),
-                "stylers": [{"visibility": "on"}]
+                ...(elementType ? { "elementType": elementType } : {}),
+                "stylers": [{ "visibility": "on" }]
             };
         });
 
@@ -275,18 +300,54 @@
             trafficLayer = new google.maps.TrafficLayer();
 
             updateMapStyles(); // Sets initial styles and updates traffic layer visibility
-            syncToggleState(); // Sets initial toggle switch state based on saved preferences or defaults
 
             WazeWrap.Events.register('moveend', null, synchronizeMapPosition);
             WazeWrap.Events.register('zoomend', null, synchronizeMapPosition);
 
+            // Add Layer Checkbox via WazeWrap
             WazeWrap.Interface.AddLayerCheckbox(
-                "display", "Google Maps Layers", layerEnabled, toggleLayer, W.map.getLayerByName("Google Maps Layers")
+                "display",
+                "Google Maps Layers",
+                layerEnabled,
+                function(checked) {
+                    elements.tabCheckbox = document.querySelector('#layer-switcher-item_google_maps_layers');
+                    elements.checkboxCallback = toggleLayer; // Correctly set the callback to toggleLayer
+
+                    if (isDebugMode) {
+                        if (elements.tabCheckbox) {
+                            console.log('WME GMAPS Layers: Layer Checkbox found:', elements.tabCheckbox);
+                        } else {
+                            console.error('WME GMAPS Layers: Layer Checkbox not found.');
+                        }
+                        console.log('WME GMAPS Layers: Layer Checkbox callback triggered with value: ', checked);
+                    }
+
+                    if (layerEnabled !== checked) {
+                        toggleLayer(checked); // Pass the checked value to toggleLayer
+                    }
+                },
+                null // Removed the unnecessary layer reference
             );
 
             new WazeWrap.Interface.Shortcut(
-                'WMEGoogleMapsLayers', 'Toggle Google Maps Layers', 'layers', 'layersToggleWMEGoogleMapsLayers', "Alt+G", toggleLayer, null
+                'WMEGoogleMapsLayers',
+                'Toggle Google Maps Layers',
+                'layers',
+                'layersToggleWMEGoogleMapsLayers',
+                "Alt+G",
+                () => toggleLayer(),
+                null
             ).add();
+
+            // Ensure the checkbox is initialized correctly
+            elements.tabCheckbox = document.querySelector('#layer-switcher-item_google_maps_layers');
+            if (elements.tabCheckbox) {
+                elements.tabCheckbox.checked = layerEnabled;
+                elements.tabCheckbox.value = layerEnabled ? "on" : "off";
+            }
+
+            syncToggleState(); // Sets initial toggle switch state based on saved preferences or defaults
+
         }).catch(error => {
             console.error("WME GMAPS Layers: WME GMAPS Layers initialization error:", error);
         });
