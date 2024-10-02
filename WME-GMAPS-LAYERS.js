@@ -17,8 +17,9 @@
 
 (function () {
     'use strict';
+
     // Debug flag
-    const isDebugMode = true; // Set to false/true to disable/enable logging
+    const isDebugMode = true;
 
     // Log the URLs of script tags that contain 'maps.googleapis.com'
     if (isDebugMode) {
@@ -30,22 +31,23 @@
         });
     }
 
+    // Configuration constants
     const scriptName = GM_info.script.name;
     const scriptVersion = GM_info.script.version;
     const layerEnabledKey = "WMEGoogleMapsLayers-enabled";
     let gmap, trafficLayer, googleMapsDiv;
     let layerEnabled = (localStorage.getItem(layerEnabledKey) ?? 'false') === 'true';
-
     let programmaticChange = false; // Flag to prevent loops during programmatic changes
 
+    // Elements references
     const elements = {
         toggleSwitch: null,
         tabCheckbox: null,
-        checkboxCallback: null // Store the callback for the checkbox
+        checkboxCallback: null
     };
 
     /**
-     * Sync the layer state with the UI elements
+     * Synchronize the state of the layer toggle across various UI elements
      */
     function syncToggleState() {
         if (isDebugMode) console.log('WME GMAPS Layers: syncToggleState() with value ', layerEnabled);
@@ -58,26 +60,25 @@
 
         // Update the wz-checkbox value based on layerEnabled
         if (elements.tabCheckbox) {
-            programmaticChange = true; // Indicate the change is programmatic
+            programmaticChange = true;
             elements.tabCheckbox.checked = layerEnabled;
             elements.tabCheckbox.value = layerEnabled ? "on" : "off";
-            // Trigger the checkbox callback to ensure the component updates
             if (elements.checkboxCallback) {
                 elements.checkboxCallback(layerEnabled);
             }
-            programmaticChange = false; // Reset the flag
-
+            programmaticChange = false;
             if (isDebugMode) console.log('WME GMAPS Layers: tabCheckbox updated to ', layerEnabled);
         }
-        // Update the visibility of the Google Maps div based on the state of layerEnabled
+
         googleMapsDiv.style.display = layerEnabled ? "block" : "none";
     }
 
     /**
-     * Toggle the visibility of the Google Maps layer
+     * Toggle the visibility and state of the layer
+     * @param {boolean|null} checked - Optional state to set the layer to
      */
     function toggleLayer(checked = null) {
-        if (!programmaticChange) { // Prevent changes when the flag is set
+        if (!programmaticChange) {
             layerEnabled = checked !== null ? checked : !layerEnabled;
             localStorage.setItem(layerEnabledKey, layerEnabled);
             syncToggleState();
@@ -85,28 +86,23 @@
     }
 
     /**
-     * Create the script header for display in the layer settings form
-     * @returns {HTMLElement} The created script header element
+     * Create header for the script within the settings form
+     * @returns {HTMLElement} Header div element
      */
     function createScriptHeader() {
         const headerDiv = document.createElement('div');
         headerDiv.className = 'script-header';
 
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'script-name';
-        nameSpan.textContent = scriptName;
-
-        const versionSpan = document.createElement('span');
-        versionSpan.className = 'script-version';
-        versionSpan.textContent = `v${scriptVersion}`;
-
-        headerDiv.append(nameSpan, versionSpan);
+        headerDiv.innerHTML = `
+            <span class="script-name">${scriptName}</span>
+            <span class="script-version">v${scriptVersion}</span>
+        `;
         return headerDiv;
     }
 
     /**
-     * Create the toggle input for enabling or disabling the layer
-     * @returns {HTMLElement} The created layer toggle input element
+     * Create toggle input for enabling/disabling the Google Maps layer
+     * @returns {HTMLElement} Toggle container div element
      */
     function createLayerToggleInput() {
         const div = document.createElement('div');
@@ -130,15 +126,14 @@
     }
 
     /**
-     * Create a feature input element for the layer settings form
-     * @param {Object} options The options for the feature input
-     * @returns {HTMLElement} The created feature input element
+     * Create a feature input (checkbox) for layer settings
+     * @param {Object} options - The options for the feature input
+     * @returns {HTMLElement} Feature input div element
      */
     function createFeatureInput({ featureType, elementType = null, defaultChecked, humanLabel, description }) {
         const div = document.createElement('div');
         const id = featureType.replace('.', '_') + (elementType ? '_' + elementType.replace('.', '_') : '');
 
-        // Load the saved state or default if not previously saved
         const savedState = localStorage.getItem(id);
         const isChecked = savedState ? savedState === 'true' : defaultChecked;
 
@@ -151,30 +146,24 @@
         if (elementType) input.dataset.elementType = elementType;
         input.dataset.visibility = 'on';
         input.addEventListener('change', (event) => {
-            // Update localStorage when checkbox state changes
             localStorage.setItem(id, event.target.checked);
             updateMapStyles();
             if (isDebugMode) console.log(`WME GMAPS Layers: ${event.target.dataset.featureType} visibility set to:`, event.target.checked);
         });
 
-        const label = document.createElement('label');
-        label.textContent = humanLabel;
-        label.htmlFor = id;
-        label.className = 'setting-label';
+        div.innerHTML = `
+            <label class='setting-label' for='${id}'>${humanLabel}</label><br>
+            <span class='description'>${description}</span>
+        `;
+        div.prepend(input);
 
-        const desc = document.createElement('span');
-        desc.className = 'description';
-        desc.textContent = description;
-
-        div.append(input, label, document.createElement('br'), desc);
         return div;
     }
 
     /**
-     * Update the Google Maps styles based on the checkbox selections
+     * Update Google Maps styles based on the checked features
      */
     function updateMapStyles() {
-        // Base styles that sets everything to 'off'
         const baseStyles = [
             { "featureType": "administrative", "stylers": [{ "visibility": "off" }] },
             { "featureType": "poi", "stylers": [{ "visibility": "off" }] },
@@ -184,15 +173,16 @@
             { "featureType": "water", "stylers": [{ "visibility": "off" }] }
         ];
 
-        // Construct styles based on the checkbox inputs, turning on what's necessary
-        const inputStyles = Array.from(document.querySelectorAll('.style-input')).filter(input => input.checked).map(input => {
-            const { featureType, elementType } = input.dataset;
-            return {
-                "featureType": featureType,
-                ...(elementType ? { "elementType": elementType } : {}),
-                "stylers": [{ "visibility": "on" }]
-            };
-        });
+        const inputStyles = Array.from(document.querySelectorAll('.style-input'))
+            .filter(input => input.checked)
+            .map(input => {
+                const { featureType, elementType } = input.dataset;
+                return {
+                    "featureType": featureType,
+                    ...(elementType ? { "elementType": elementType } : {}),
+                    "stylers": [{ "visibility": "on" }]
+                };
+            });
 
         gmap.setOptions({ styles: [...baseStyles, ...inputStyles] });
         updateTrafficLayer();
@@ -200,49 +190,50 @@
     }
 
     /**
-     * Update the display of the traffic layer on Google Maps
+     * Update the traffic layer visibility on Google Maps
      */
     function updateTrafficLayer() {
         const roadsTrafficCheckbox = document.querySelector('#road');
         if (roadsTrafficCheckbox && roadsTrafficCheckbox.checked) {
-            trafficLayer.setMap(gmap); // Show traffic layer
+            trafficLayer.setMap(gmap);
             if (isDebugMode) console.log('WME GMAPS Layers: Traffic layer displayed');
         } else {
-            trafficLayer.setMap(null); // Hide traffic layer
+            trafficLayer.setMap(null);
             if (isDebugMode) console.log('WME GMAPS Layers: Traffic layer hidden');
         }
-        // Continuous set styles irrelevant of traffic layer visibility
-        googleMapsDiv.style.pointerEvents = 'none'; // Block mouse events
+        googleMapsDiv.style.pointerEvents = 'none';
         if (googleMapsDiv.firstElementChild) {
-            googleMapsDiv.firstElementChild.style.backgroundColor = 'rgb(229 227 223 / 0%)'; // Set background color to transparent
+            googleMapsDiv.firstElementChild.style.backgroundColor = 'rgb(229 227 223 / 0%)';
         }
     }
 
     /**
-     * Synchronize the Google Maps position with the Waze map position
+     * Transform Waze map coordinates to Google Maps coordinates
+     * @returns {Object} Transformed coordinates
      */
     function getTransformedCoordinates() {
         const lonlat = new OpenLayers.LonLat(W.map.getCenter().lon, W.map.getCenter().lat);
         lonlat.transform(
-            new OpenLayers.Projection('EPSG:900913'), // WME projection
-            new OpenLayers.Projection('EPSG:4326') // Google Maps projection
+            new OpenLayers.Projection('EPSG:900913'),
+            new OpenLayers.Projection('EPSG:4326')
         );
         return lonlat;
     }
 
+    /**
+     * Synchronize the position and zoom level of Google Maps with Waze maps
+     */
     function synchronizeMapPosition() {
-        if (!gmap || !W.map) return; // Ensure both maps are initialized
+        if (!gmap || !W.map) return;
 
         const lonlat = getTransformedCoordinates();
-
-        // Update Google Maps center and zoom
         gmap.panTo(new google.maps.LatLng(lonlat.lat, lonlat.lon));
         gmap.setZoom(W.map.getZoom());
         if (isDebugMode) console.log("WME GMAPS Layers: Maps synchronized - Google Maps is set to", lonlat.lat, lonlat.lon);
     }
 
     /**
-     * Initialize the Google Maps layers and UI
+     * Initialize the Google Maps layers and UI components
      */
     function initGoogleMapsLayers() {
         const { tabLabel, tabPane } = W.userscripts.registerSidebarTab("Gmaps in WME");
@@ -252,7 +243,6 @@
             const form = document.createElement('form');
             form.className = 'settings-form';
 
-            // Append elements
             form.append(
                 createScriptHeader(),
                 createLayerToggleInput(),
@@ -263,7 +253,8 @@
                     { featureType: "poi", defaultChecked: false, humanLabel: "Points of Interest", description: "" },
                     { featureType: "transit", defaultChecked: false, humanLabel: "Public Transit Features", description: "" },
                     { featureType: "water", defaultChecked: false, humanLabel: "Water Bodies", description: "" },
-                ].map(createFeatureInput));
+                ].map(createFeatureInput)
+            );
 
             tabPane.appendChild(form);
 
@@ -276,9 +267,8 @@
             googleMapsDiv.style.bottom = '0';
             W.map.olMap.getViewport().appendChild(googleMapsDiv);
 
-            const lonlat = getTransformedCoordinates(); // Get initial transformed coordinates
+            const lonlat = getTransformedCoordinates();
 
-            // Detect and log API key from the script URL, if available
             const scriptTag = Array.from(document.querySelectorAll('script')).find(script => script.src.includes('maps.googleapis.com'));
             if (scriptTag) {
                 const urlParams = new URL(scriptTag.src);
@@ -292,26 +282,21 @@
                 disableDefaultUI: true,
             });
 
-            // Listen for tilesloaded event to synchronize positions
-            google.maps.event.addListenerOnce(gmap, 'tilesloaded', function() {
-                synchronizeMapPosition();
-            });
+            google.maps.event.addListenerOnce(gmap, 'tilesloaded', synchronizeMapPosition);
 
             trafficLayer = new google.maps.TrafficLayer();
-
-            updateMapStyles(); // Sets initial styles and updates traffic layer visibility
+            updateMapStyles();
 
             WazeWrap.Events.register('moveend', null, synchronizeMapPosition);
             WazeWrap.Events.register('zoomend', null, synchronizeMapPosition);
 
-            // Add Layer Checkbox via WazeWrap
             WazeWrap.Interface.AddLayerCheckbox(
                 "display",
                 "Google Maps Layers",
                 layerEnabled,
                 function(checked) {
                     elements.tabCheckbox = document.querySelector('#layer-switcher-item_google_maps_layers');
-                    elements.checkboxCallback = toggleLayer; // Correctly set the callback to toggleLayer
+                    elements.checkboxCallback = toggleLayer;
 
                     if (isDebugMode) {
                         if (elements.tabCheckbox) {
@@ -323,10 +308,10 @@
                     }
 
                     if (layerEnabled !== checked) {
-                        toggleLayer(checked); // Pass the checked value to toggleLayer
+                        toggleLayer(checked);
                     }
                 },
-                null // Removed the unnecessary layer reference
+                null
             );
 
             new WazeWrap.Interface.Shortcut(
@@ -335,31 +320,31 @@
                 'layers',
                 'layersToggleWMEGoogleMapsLayers',
                 "Alt+G",
-                () => toggleLayer(),
+                toggleLayer,
                 null
             ).add();
 
-            // Ensure the checkbox is initialized correctly
             elements.tabCheckbox = document.querySelector('#layer-switcher-item_google_maps_layers');
             if (elements.tabCheckbox) {
                 elements.tabCheckbox.checked = layerEnabled;
                 elements.tabCheckbox.value = layerEnabled ? "on" : "off";
             }
 
-            syncToggleState(); // Sets initial toggle switch state based on saved preferences or defaults
+            syncToggleState();
 
         }).catch(error => {
             console.error("WME GMAPS Layers: WME GMAPS Layers initialization error:", error);
         });
     }
 
+    // Wait for Waze Map Editor to be ready before initializing
     if (W?.userscripts?.state?.isReady) {
         initGoogleMapsLayers();
     } else {
         document.addEventListener('wme-ready', initGoogleMapsLayers, { once: true });
     }
 
-    // Add CSS for spacing and formatting
+    // Inject custom CSS styles
     const style = document.createElement('style');
     style.textContent = `
         .input-space {
@@ -389,7 +374,7 @@
             background-color: transparent;
             border: 2px solid #ddd;
             border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
         }
         .script-header {
             text-align: center;
