@@ -19,7 +19,7 @@
     'use strict';
 
     // Debug flag
-    const isDebugMode = true;
+    const isDebugMode = false;
 
     // Log the URLs of script tags that contain 'maps.googleapis.com'
     if (isDebugMode) {
