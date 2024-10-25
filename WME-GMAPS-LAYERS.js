@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.10.08.01
+// @version      2024.10.25.00
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -361,6 +361,7 @@
             border-radius: 50%;
             top: 2px;
             left: 2px;
+            margin-top: 0px;
             transition: all 0.3s;
         }
         .toggle-switch.active .slider {
