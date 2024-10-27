@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.10.25.00
+// @version      2024.10.25.01
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -18,21 +18,31 @@
 (function () {
     'use strict';
 
-    const debugMode = false;
-
-    if (debugMode) {
-        document.querySelectorAll('script').forEach(script => {
-            const src = script.src;
-            if (src && src.includes('maps.googleapis.com')) {
-                console.log('WME GMAPS Layers: Google Maps API Script URL:', src);
-            }
-        });
-    }
-
+    const debugMode = true;
     const scriptMetadata = GM_info.script;
     const storageKey = "WMEGMAPSLayerState";
+
+    function getStorageData() {
+        return JSON.parse(localStorage.getItem(storageKey) ?? '{}');
+    }
+
+    function setStorageData(data) {
+        localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function setItem(key, value) {
+        const data = getStorageData();
+        data[key] = value;
+        setStorageData(data);
+    }
+
+    function getItem(key, defaultValue = null) {
+        const data = getStorageData();
+        return data[key] ?? defaultValue;
+    }
+
     let googleMap, trafficLayer, gmapsContainer;
-    let layerActive = (localStorage.getItem(storageKey) ?? 'false') === 'true';
+    let layerActive = getItem('layerActive', 'false') === 'true';
     let syncChange = false;
 
     const uiElements = {
@@ -45,27 +55,42 @@
         if (debugMode) console.log('WME GMAPS Layers: updateUiAfterToggle() with value', layerActive);
 
         if (uiElements.toggleButton) {
+            if (debugMode) console.log('WME GMAPS Layers: Updating toggle button state to', layerActive);
             uiElements.toggleButton.classList.toggle('active', layerActive);
         }
 
         if (uiElements.layerCheckbox) {
             syncChange = true;
+            if (debugMode) console.log('WME GMAPS Layers: Updating layer checkbox state to', layerActive);
             uiElements.layerCheckbox.checked = layerActive;
             uiElements.layerCheckbox.value = layerActive ? "on" : "off";
             if (uiElements.checkboxChangeHandler) {
+                if (debugMode) console.log('WME GMAPS Layers: Invoking checkboxChangeHandler with value', layerActive);
                 uiElements.checkboxChangeHandler(layerActive);
             }
             syncChange = false;
         }
 
-        gmapsContainer.style.display = layerActive ? "block" : "none";
+        if (gmapsContainer) {
+            if (debugMode) console.log('WME GMAPS Layers: Updating gmapsContainer display to', layerActive ? "block" : "none");
+            gmapsContainer.style.display = layerActive ? "block" : "none";
+        }
+
+        const layerMenuCheckbox = document.querySelector('#layer-switcher-item_gmaps_layers input');
+        if (layerMenuCheckbox) {
+            if (debugMode) console.log('WME GMAPS Layers: Updating layer menu checkbox state to', layerActive);
+            layerMenuCheckbox.checked = layerActive;
+        }
     }
 
     function toggleLayerState(newState = null) {
         if (!syncChange) {
+            if (debugMode) console.log('WME GMAPS Layers: toggleLayerState called with newState:', newState);
+            syncChange = true;
             layerActive = newState !== null ? newState : !layerActive;
-            localStorage.setItem(storageKey, layerActive);
+            setItem('layerActive', layerActive.toString());
             updateUiAfterToggle();
+            syncChange = false;
         }
     }
 
@@ -86,7 +111,9 @@
 
         const toggle = document.createElement('div');
         toggle.className = `toggle-switch${layerActive ? ' active' : ''}`;
-        toggle.addEventListener('click', () => toggleLayerState());
+        toggle.addEventListener('click', () => {
+            toggleLayerState();
+        });
 
         const slider = document.createElement('div');
         slider.className = 'slider';
@@ -105,8 +132,8 @@
         const wrapper = document.createElement('div');
         const id = featureType.replace('.', '_') + (elementType ? '_' + elementType.replace('.', '_') : '');
 
-        const savedState = localStorage.getItem(id);
-        const isChecked = savedState ? savedState === 'true' : defaultChecked;
+        const savedState = getItem(id, defaultChecked ? 'true' : 'false');
+        const isChecked = savedState === 'true';
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -117,7 +144,7 @@
         if (elementType) checkbox.dataset.elementType = elementType;
         checkbox.dataset.visibility = 'on';
         checkbox.addEventListener('change', (event) => {
-            localStorage.setItem(id, event.target.checked);
+            setItem(id, event.target.checked.toString());
             updateMapStyles();
             if (debugMode) console.log(`WME GMAPS Layers: ${event.target.dataset.featureType} visibility set to:`, event.target.checked);
         });
@@ -250,7 +277,7 @@
                 "GMaps Layers",
                 layerActive,
                 function(checked) {
-                    uiElements.layerCheckbox = document.querySelector('#layer-switcher-item_google_maps_layers');
+                    uiElements.layerCheckbox = document.querySelector('#layer-switcher-item_gmaps_layers');
 
                     uiElements.checkboxChangeHandler = toggleLayerState;
                     if (layerActive !== checked) {
@@ -270,7 +297,7 @@
                 null
             ).add();
 
-            uiElements.layerCheckbox = document.querySelector('#layer-switcher-item_google_maps_layers');
+            uiElements.layerCheckbox = document.querySelector('#layer-switcher-item_gmaps_layers');
             if (uiElements.layerCheckbox) {
                 uiElements.layerCheckbox.checked = layerActive;
                 uiElements.layerCheckbox.value = layerActive ? "on" : "off";
