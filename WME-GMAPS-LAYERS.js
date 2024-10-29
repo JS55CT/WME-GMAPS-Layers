@@ -53,10 +53,10 @@
     checkboxChangeHandler: null,
   };
 
-   // Function to update UI elements after toggling the layer
+  // Function to update UI elements after toggling the layer
   function updateUiAfterToggle() {
     if (debugMode) console.log("WME GMAPS Layers: updateUiAfterToggle() with value", layerActive);
-    
+
     // Update toggle button state
     if (uiElements.toggleButton) {
       if (debugMode) console.log("WME GMAPS Layers: Updating toggle button state to", layerActive);
@@ -81,7 +81,7 @@
       if (debugMode) console.log("WME GMAPS Layers: Updating gmapsContainer display to", layerActive ? "block" : "none");
       gmapsContainer.style.display = layerActive ? "block" : "none";
     }
-    
+
     // Update the state of the layer menu checkbox
     const layerMenuCheckbox = document.querySelector("#layer-switcher-item_gmaps_layers input");
     if (layerMenuCheckbox) {
@@ -172,12 +172,13 @@
     return wrapper;
   }
 
-   // Function to create and return the map style selector UI
+  // Function to create and return the map style selector UI
+  /*
   function createMapStyleSelector() {
     const container = document.createElement("div"); // Container for all elements
 
     const hr = document.createElement("hr"); // Create the hr element
-    container.appendChild(hr); 
+    container.appendChild(hr);
 
     const sectionLabel = document.createElement("div");
     sectionLabel.className = "script-header";
@@ -186,10 +187,11 @@
 
     const styles = [
       { label: "Standard", value: "standardMapStyle" },
-      { label: "Dark / Night", value: "darkMapStyle" },
-      { label: "Silver", value: "silverMapStyle" },
+      { label: "Night", value: "nightMapStyle" },
+      { label: "Gray", value: "grayMapStyle" },
       { label: "Retro", value: "retroMapStyle" },
       { label: "Aubergine", value: "aubergineMapStyle" },
+      { label: "Neon", value: "neonMapStyle" },
     ];
 
     const savedStyle = getItem("selectedMapStyle", "standardMapStyle");
@@ -222,26 +224,60 @@
     });
     return container;
   }
+*/
+function createMapStyleSelector() {
+  // Container for all elements
+  const container = document.createElement("div"); 
+
+  // Create and append the hr element
+  const hr = document.createElement("hr"); 
+  container.appendChild(hr);
+
+  // Create and append the section label
+  const sectionLabel = document.createElement("div");
+  sectionLabel.className = "script-header";
+  sectionLabel.textContent = "Map Style";
+  container.appendChild(sectionLabel);
+
+  // Define available styles
+  const styles = [
+    { label: "Standard", value: "standardMapStyle" },
+    { label: "Night", value: "nightMapStyle" },
+    { label: "Gray", value: "grayMapStyle" },
+    { label: "Retro", value: "retroMapStyle" },
+    { label: "Aubergine", value: "aubergineMapStyle" },
+    { label: "Neon", value: "neonMapStyle" },
+  ];
+
+  const savedStyle = getItem("selectedMapStyle", "standardMapStyle");
+
+  // Create the select element (combo box)
+  const select = document.createElement("select");
+  select.className = "style-selector";
+  select.addEventListener("change", function () {
+    setItem("selectedMapStyle", this.value);
+    updateMapStyles();
+  });
+
+  // Populate the select element with options
+  styles.forEach((style) => {
+    const option = document.createElement("option");
+    option.value = style.value;
+    option.textContent = style.label;
+    option.selected = style.value === savedStyle;
+    select.appendChild(option);
+  });
+
+  // Append the select element to the container
+  container.appendChild(select);
+
+  return container;
+}
+
 
   const mapStyles = {
-    standardMapStyle: [],
-    silverMapStyle: [
-      { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
-      { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-      { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
-      { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
-      { featureType: "poi", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
-      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
-      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
-      { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-      { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
-      { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-      { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
-      { featureType: "transit.line", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
-      { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
-      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+    standardMapStyle: [
+      { featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 10 }, { weight: 2.5 }] },
     ],
     retroMapStyle: [
       { elementType: "geometry", stylers: [{ color: "#ebe3cd" }] },
@@ -250,6 +286,7 @@
       { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#c9b2a6" }] },
       { featureType: "administrative.land_parcel", elementType: "geometry.stroke", stylers: [{ color: "#dcd2be" }] },
       { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#ae9e90" }] },
+      { featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 0 }, { weight: 2.5 }] },
       { featureType: "poi", elementType: "geometry", stylers: [{ color: "#dfd2ae" }] },
       { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#93817c" }] },
       { featureType: "poi.park", elementType: "geometry.fill", stylers: [{ color: "#a5b076" }] },
@@ -268,22 +305,27 @@
       { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#b9d3c2" }] },
       { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#92998d" }] },
     ],
-    darkMapStyle: [
-      { elementType: "geometry", stylers: [{ color: "#212121" }] },
-      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-      { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-      { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
-      { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
-      { featureType: "poi", elementType: "geometry", stylers: [{ color: "#212121" }] },
-      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#181818" }] },
-      { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#2c2c2c" }] },
-      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
-      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3c3c3c" }] },
-      { featureType: "road.highway.controlled_access", elementType: "geometry", stylers: [{ color: "#4e4e4e" }] },
-      { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-      { featureType: "transit", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-      { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] },
-      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] },
+    nightMapStyle: [
+      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+      { featureType: "administrative", stylers: [{ visibility: "on" }] },
+      { featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 30 }, { weight: 2.5 }] },
+      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+      { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+      { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+      { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }] },
+      { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+      { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
     ],
     aubergineMapStyle: [
       { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
@@ -291,6 +333,7 @@
       { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
       { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#4b6878" }] },
       { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#64779e" }] },
+      { featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 10 }, { weight: 2.5 }] },
       { featureType: "landscape.man_made", elementType: "geometry.stroke", stylers: [{ color: "#334e87" }] },
       { featureType: "poi", elementType: "geometry", stylers: [{ color: "#283d6a" }] },
       { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#6f9ba5" }] },
@@ -308,6 +351,22 @@
       { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] },
       { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4e6d70" }] },
     ],
+    grayMapStyle: [
+      { featureType: "administrative", elementType: "all", stylers: [{ saturation: "-100" }] },
+      { featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 0 }, { weight: 2.5 }] },
+      { featureType: "landscape", elementType: "all", stylers: [{ saturation: -100 }, { lightness: 65 }, { visibility: "on" }] },
+      { featureType: "poi", elementType: "all", stylers: [{ saturation: -100 }, { lightness: "50" }, { visibility: "simplified" }] },
+      { featureType: "road", elementType: "all", stylers: [{ saturation: "-100" }] },
+      { featureType: "road.highway", elementType: "all", stylers: [{ visibility: "simplified" }] },
+      { featureType: "road.arterial", elementType: "all", stylers: [{ lightness: "30" }] },
+      { featureType: "road.local", elementType: "all", stylers: [{ lightness: "40" }] },
+      { featureType: "transit", elementType: "all", stylers: [{ saturation: -100 }, { visibility: "simplified" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ hue: "#ffff00" }, { lightness: -25 }, { saturation: -97 }] },
+      { featureType: "water", elementType: "labels", stylers: [{ lightness: -25 }, { saturation: -100 }] },
+    ],
+    neonMapStyle: [
+      { "stylers": [{ "saturation": 100 }, { "gamma": 0.6 } ] }
+    ],
   };
 
   function updateMapStyles() {
@@ -322,7 +381,8 @@
     ];
 
     // Get the selected map style from radio buttons
-    const selectedStyleType = document.querySelector('input[name="mapStyle"]:checked').value;
+    //const selectedStyleType = document.querySelector('input[name="mapStyle"]:checked').value; // Used with the old radio buttons
+    const selectedStyleType = document.querySelector('.style-selector').value;
     const selectedStyle = mapStyles[selectedStyleType] || [];
 
     // Collect layers that should be visable from checkboxes
@@ -400,11 +460,11 @@
             { featureType: "transit", defaultChecked: false, label: "Public Transit Features", description: "" },
             { featureType: "water", defaultChecked: false, label: "Water Bodies", description: "" },
           ].map(createFeatureCheckbox),
-          createMapStyleSelector(),
+          createMapStyleSelector()
         );
 
         tabPane.appendChild(settingsForm);
-        
+
         // Create a container for Google Maps
         gmapsContainer = document.createElement("div");
         gmapsContainer.id = "gmapsContainer";
@@ -565,38 +625,19 @@
   .toggle-switch:not(.active) .slider {
       left: 2px;
   }
-    .radio-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    .radio-input {
-        display: none;
-    }
-    .radio-label {
-        font-family: Arial, sans-serif;
-        font-size: 1em;
-        color: #333;
-        position: relative;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-    }
-    .radio-label::before {
-        content: '';
-        width: 12px;
-        height: 12px;
-        border: 2px solid #aaa;
-        border-radius: 3px;
-        background: white;
-        display: inline-block;
-        margin-right: 5px;
-        box-sizing: border-box;
-    }
-    .radio-input:checked + .radio-label::before {
-        background: #007bff;
-        border-color: #007bff;
-    }
+   .style-selector {
+      width: 100%;
+      padding: 5px;
+      font-size: 1em;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+      color: #333;
+      border-radius: 10px;
+      border: 2px solid #aaa;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      background-color: transparent;
+  }
 `;
   document.head.appendChild(customStyles);
 })();
