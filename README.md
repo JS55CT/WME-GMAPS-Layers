@@ -28,9 +28,9 @@ To install this user script, you need to have a userscript manager installed in 
    - **Open the Tampermonkey dashboard** by clicking on the Tampermonkey icon in your browser toolbar and selecting "Dashboard".
    - In the dashboard, click on the tab that says "Utilities".
    - In the "Import from URL" section, paste the following URL:
-     ```
-     https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js
-     ```
+
+     ``` https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js ```
+
    - Click on the "Import" button.
    - You will be directed to a page that shows the script. Click the "Install" button.
 
@@ -40,6 +40,7 @@ To install this user script, you need to have a userscript manager installed in 
    - [Greasemonkey for Firefox](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)
 
 2. [Click here to install WME GMAPS Layers](https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js)
+
 ## Usage
 
 Once installed, follow these steps to use the user script within the Waze Map Editor:
@@ -55,13 +56,19 @@ The script provides several configuration options directly within the WME interf
 
 - **Enable/Disable GMAPS Layers:** Toggle the visibility of the GMAPS overlay.
 - **Customize Layers:** Choose which specific GMAPS features to display:
-  - Roads & Traffic
+  - Roads
+  - Traffic
   - Administrative Land Parcels
   - General Landscape
   - Points of Interest
   - Public Transit Features
   - Water Bodies
-
+- **Customize May Style:**
+  - Standered
+  - Dark / Night
+  - Silver
+  - Retro
+  - Aubergine
 
 ## License
 
