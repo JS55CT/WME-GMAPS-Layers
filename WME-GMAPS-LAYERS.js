@@ -195,6 +195,7 @@
     // Create the select element (combo box)
     const select = document.createElement("select");
     select.className = "style-selector";
+    //select.style.backgroundColor = "transparent"; 
     select.addEventListener("change", function () {
       setItem("selectedMapStyle", this.value);
       updateMapStyles();
@@ -206,6 +207,7 @@
       option.value = style.value;
       option.textContent = style.label;
       option.selected = style.value === savedStyle;
+      //option.style.backgroundColor = "#D3D3D3";
       select.appendChild(option);
     });
 
@@ -580,6 +582,9 @@
       margin-bottom: 10px;
       background-color: transparent;
   }
+  .style-selector option {
+  background-color: #F0F0F0;
+}
 `;
   document.head.appendChild(customStyles);
 
