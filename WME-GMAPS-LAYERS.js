@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.10.28.02
+// @version      2024.11.04.01
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -13,8 +13,6 @@
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // ==/UserScript==
 
-/* global W, OpenLayers, google, WazeWrap */
-
 (function () {
   "use strict";
 
@@ -22,6 +20,15 @@
   const debugMode = false; // Debug mode flag
   const scriptMetadata = GM_info.script; // Metadata for the script
   const storageKey = "WMEGMAPSLayerState"; // Key for storing state in localStorage
+  let wmeSDK, googleMap, trafficLayer, gmapsContainer;
+  let layerActive = getItem("layerActive", "false") === "true"; // Layer activation status
+  let syncChange = false; // Flag to avoid sync issues during state changes
+
+  const uiElements = {
+    toggleButton: null,
+    layerCheckbox: null,
+    checkboxChangeHandler: null,
+  };
 
   // Utility functions for localStorage management
   function getStorageData() {
@@ -42,16 +49,6 @@
     const data = getStorageData();
     return data[key] ?? defaultValue;
   }
-
-  let googleMap, trafficLayer, gmapsContainer; // Google Maps instances and container
-  let layerActive = getItem("layerActive", "false") === "true"; // Layer activation status
-  let syncChange = false; // Flag to avoid sync issues during state changes
-
-  const uiElements = {
-    toggleButton: null,
-    layerCheckbox: null,
-    checkboxChangeHandler: null,
-  };
 
   // Function to update UI elements after toggling the layer
   function updateUiAfterToggle() {
@@ -80,13 +77,10 @@
     if (gmapsContainer) {
       if (debugMode) console.log("WME GMAPS Layers: Updating gmapsContainer display to", layerActive ? "block" : "none");
       gmapsContainer.style.display = layerActive ? "block" : "none";
-    }
 
-    // Update the state of the layer menu checkbox
-    const layerMenuCheckbox = document.querySelector("#layer-switcher-item_gmaps_layers input");
-    if (layerMenuCheckbox) {
-      if (debugMode) console.log("WME GMAPS Layers: Updating layer menu checkbox state to", layerActive);
-      layerMenuCheckbox.checked = layerActive;
+      if (layerActive) {
+        syncMapPosition();
+      }
     }
   }
 
@@ -172,19 +166,21 @@
     return wrapper;
   }
 
-  // Function to create and return the map style selector UI
-  /*
   function createMapStyleSelector() {
-    const container = document.createElement("div"); // Container for all elements
+    // Container for all elements
+    const container = document.createElement("div");
 
-    const hr = document.createElement("hr"); // Create the hr element
+    // Create and append the hr element
+    const hr = document.createElement("hr");
     container.appendChild(hr);
 
+    // Create and append the section label
     const sectionLabel = document.createElement("div");
     sectionLabel.className = "script-header";
     sectionLabel.textContent = "Map Style";
-    container.appendChild(sectionLabel); // Append the section label to the container
+    container.appendChild(sectionLabel);
 
+    // Define available styles
     const styles = [
       { label: "Standard", value: "standardMapStyle" },
       { label: "Night", value: "nightMapStyle" },
@@ -196,89 +192,31 @@
 
     const savedStyle = getItem("selectedMapStyle", "standardMapStyle");
 
-    // Create radio buttons for each map style
-    styles.forEach((style, index) => {
-      const radioContainer = document.createElement("div");
-      radioContainer.className = "radio-container";
-
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.id = `style-${index}`;
-      input.name = "mapStyle";
-      input.value = style.value;
-      input.className = "radio-input";
-      input.checked = style.value === savedStyle;
-      input.addEventListener("change", function () {
-        setItem("selectedMapStyle", this.value);
-        updateMapStyles();
-      });
-
-      const label = document.createElement("label");
-      label.htmlFor = input.id;
-      label.textContent = style.label;
-      label.className = "radio-label";
-
-      radioContainer.appendChild(input);
-      radioContainer.appendChild(label);
-      container.appendChild(radioContainer);
+    // Create the select element (combo box)
+    const select = document.createElement("select");
+    select.className = "style-selector";
+    select.addEventListener("change", function () {
+      setItem("selectedMapStyle", this.value);
+      updateMapStyles();
     });
+
+    // Populate the select element with options
+    styles.forEach((style) => {
+      const option = document.createElement("option");
+      option.value = style.value;
+      option.textContent = style.label;
+      option.selected = style.value === savedStyle;
+      select.appendChild(option);
+    });
+
+    // Append the select element to the container
+    container.appendChild(select);
+
     return container;
   }
-*/
-function createMapStyleSelector() {
-  // Container for all elements
-  const container = document.createElement("div"); 
-
-  // Create and append the hr element
-  const hr = document.createElement("hr"); 
-  container.appendChild(hr);
-
-  // Create and append the section label
-  const sectionLabel = document.createElement("div");
-  sectionLabel.className = "script-header";
-  sectionLabel.textContent = "Map Style";
-  container.appendChild(sectionLabel);
-
-  // Define available styles
-  const styles = [
-    { label: "Standard", value: "standardMapStyle" },
-    { label: "Night", value: "nightMapStyle" },
-    { label: "Gray", value: "grayMapStyle" },
-    { label: "Retro", value: "retroMapStyle" },
-    { label: "Aubergine", value: "aubergineMapStyle" },
-    { label: "Neon", value: "neonMapStyle" },
-  ];
-
-  const savedStyle = getItem("selectedMapStyle", "standardMapStyle");
-
-  // Create the select element (combo box)
-  const select = document.createElement("select");
-  select.className = "style-selector";
-  select.addEventListener("change", function () {
-    setItem("selectedMapStyle", this.value);
-    updateMapStyles();
-  });
-
-  // Populate the select element with options
-  styles.forEach((style) => {
-    const option = document.createElement("option");
-    option.value = style.value;
-    option.textContent = style.label;
-    option.selected = style.value === savedStyle;
-    select.appendChild(option);
-  });
-
-  // Append the select element to the container
-  container.appendChild(select);
-
-  return container;
-}
-
 
   const mapStyles = {
-    standardMapStyle: [
-      { featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 10 }, { weight: 2.5 }] },
-    ],
+    standardMapStyle: [{ featureType: "administrative.land_parcel", elementType: "geometry", stylers: [{ lightness: 10 }, { weight: 2.5 }] }],
     retroMapStyle: [
       { elementType: "geometry", stylers: [{ color: "#ebe3cd" }] },
       { elementType: "labels.text.fill", stylers: [{ color: "#523735" }] },
@@ -325,7 +263,7 @@ function createMapStyleSelector() {
       { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
       { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
       { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
-      { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
+      { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] },
     ],
     aubergineMapStyle: [
       { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
@@ -364,25 +302,21 @@ function createMapStyleSelector() {
       { featureType: "water", elementType: "geometry", stylers: [{ hue: "#ffff00" }, { lightness: -25 }, { saturation: -97 }] },
       { featureType: "water", elementType: "labels", stylers: [{ lightness: -25 }, { saturation: -100 }] },
     ],
-    neonMapStyle: [
-      { "stylers": [{ "saturation": 100 }, { "gamma": 0.6 } ] }
-    ],
+    neonMapStyle: [{ stylers: [{ saturation: 100 }, { gamma: 0.6 }] }],
   };
 
-  function updateMapStyles() {
-    // Set all Layers to OFF each time
-    const baseMapStyles = [
-      { featureType: "administrative", stylers: [{ visibility: "off" }] },
-      { featureType: "poi", stylers: [{ visibility: "off" }] },
-      { featureType: "road", stylers: [{ visibility: "off" }] },
-      { featureType: "transit", stylers: [{ visibility: "off" }] },
-      { featureType: "landscape", stylers: [{ visibility: "off" }] },
-      { featureType: "water", stylers: [{ visibility: "off" }] },
-    ];
+  const baseMapStyles = [
+    { featureType: "administrative", stylers: [{ visibility: "off" }] },
+    { featureType: "poi", stylers: [{ visibility: "off" }] },
+    { featureType: "road", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", stylers: [{ visibility: "off" }] },
+    { featureType: "landscape", stylers: [{ visibility: "off" }] },
+    { featureType: "water", stylers: [{ visibility: "off" }] },
+  ];
 
+  function updateMapStyles() {
     // Get the selected map style from radio buttons
-    //const selectedStyleType = document.querySelector('input[name="mapStyle"]:checked').value; // Used with the old radio buttons
-    const selectedStyleType = document.querySelector('.style-selector').value;
+    const selectedStyleType = document.querySelector(".style-selector").value;
     const selectedStyle = mapStyles[selectedStyleType] || [];
 
     // Collect layers that should be visable from checkboxes
@@ -401,7 +335,7 @@ function createMapStyleSelector() {
     // Apply all Map Layers & styles to the Google Map
     googleMap.setOptions({ styles: [...selectedStyle, ...baseMapStyles, ...customStyles] });
 
-    // Adjust gmapsContainer's functionality so you can still interact with WME Layers
+    // Tuen off gmapsContainer's interactions so we can still interact with WME Layers
     gmapsContainer.style.pointerEvents = "none";
     if (gmapsContainer.firstElementChild) {
       gmapsContainer.firstElementChild.style.backgroundColor = "rgb(229 227 223 / 0%)";
@@ -422,122 +356,130 @@ function createMapStyleSelector() {
     }
   }
 
-  function transformCoords() {
-    const currentPosition = new OpenLayers.LonLat(W.map.getCenter().lon, W.map.getCenter().lat);
-    currentPosition.transform(new OpenLayers.Projection("EPSG:900913"), new OpenLayers.Projection("EPSG:4326"));
-    return currentPosition;
+  function syncMapPosition() {
+    // Check if both Google Map and WME Map SDK are initialized
+    if (!layerActive) return;
+    if (!googleMap || !wmeSDK.Map) return;
+    const center = wmeSDK.Map.getMapCenter(); // Get the current center coordinates of the WME map in WGS84 format
+    const zoom = wmeSDK.Map.getZoomLevel(); // Get the current zoom level of the WME map
+    googleMap.setZoom(zoom); // Set Google Map zoom level to match WME map
+    googleMap.panTo(new google.maps.LatLng(center.lat, center.lon)); // Pan Google Map to the new coordinates
+
+    // Log the synchronization operation in debug mode
+    if (debugMode) {
+      console.log("WME GMAPS Layers: Maps synchronized - Google Maps is set to", center.lat, center.lon, "with zoom level", zoom);
+    }
   }
 
-  function syncMapPosition() {
-    if (!googleMap || !W.map) return;
-
-    const coordinates = transformCoords();
-    googleMap.panTo(new google.maps.LatLng(coordinates.lat, coordinates.lon));
-    googleMap.setZoom(W.map.getZoom());
-    if (debugMode) console.log("WME GMAPS Layers: Maps synchronized - Google Maps is set to", coordinates.lat, coordinates.lon);
+  // Check if the SDK and required methods are loaded
+  function isSdkLoaded() {
+    return window.getWmeSdk && wmeSDK && wmeSDK.Sidebar && wmeSDK.LayerSwitcher && wmeSDK.Shortcuts && wmeSDK.Events;
   }
 
   // Initialize the GMAPS Tab and UI elements
   function initializeGMapsLayers() {
-    const { tabLabel, tabPane } = W.userscripts.registerSidebarTab("GMaps in WME");
-    tabLabel.innerText = "GMAP";
+    console.log("WME GMAPS Layers: initializeGMapsLayers() started");
 
-    W.userscripts
-      .waitForElementConnected(tabPane)
-      .then(() => {
-        const settingsForm = document.createElement("form");
-        settingsForm.className = "settings-form";
+    window.SDK_INITIALIZED.then(() => {
+      // Initialize the SDK
+      wmeSDK = getWmeSdk({ scriptId: "wme-gmaps-layers", scriptName: "WME GMAPS Layers" });
 
-        settingsForm.append(
-          createScriptHeader(),
-          createToggleSwitch(),
-          ...[
-            { featureType: "road", defaultChecked: true, label: "Roads", description: "" },
-            { featureType: "traffic", defaultChecked: true, label: "Traffic", description: "" },
-            { featureType: "administrative.land_parcel", defaultChecked: false, label: "Land Parcels", description: "" },
-            { featureType: "landscape", defaultChecked: false, label: "General Landscape", description: "" },
-            { featureType: "poi", defaultChecked: false, label: "Points of Interest", description: "" },
-            { featureType: "transit", defaultChecked: false, label: "Public Transit Features", description: "" },
-            { featureType: "water", defaultChecked: false, label: "Water Bodies", description: "" },
-          ].map(createFeatureCheckbox),
-          createMapStyleSelector()
-        );
+      // Check if the SDK and the necessary methods are loaded
+      if (!isSdkLoaded()) {
+        console.error("WME GMAPS Layers: SDK or required methods are not loaded correctly.");
+        return;
+      }
+      console.log("WME GMAPS Layers: wmeSDK initialized");
 
-        tabPane.appendChild(settingsForm);
+      // Register a new tab in the sidebar
+      wmeSDK.Sidebar.registerScriptTab("GMaps in WME")
+        .then(({ tabLabel, tabPane }) => {
+          tabLabel.innerText = "GMAP";
 
-        // Create a container for Google Maps
-        gmapsContainer = document.createElement("div");
-        gmapsContainer.id = "gmapsContainer";
-        gmapsContainer.style.position = "absolute";
-        gmapsContainer.style.top = "0";
-        gmapsContainer.style.left = "0";
-        gmapsContainer.style.right = "0";
-        gmapsContainer.style.bottom = "0";
-        W.map.olMap.getViewport().appendChild(gmapsContainer);
+          console.log("WME GMAPS Layers: GMAP Sidebar Tab successfuly created");
+          const settingsForm = document.createElement("form");
+          settingsForm.className = "settings-form";
 
-        const coordinates = transformCoords();
+          settingsForm.append(
+            createScriptHeader(),
+            createToggleSwitch(),
+            ...[
+              { featureType: "road", defaultChecked: true, label: "Roads", description: "" },
+              { featureType: "traffic", defaultChecked: true, label: "Traffic", description: "" },
+              { featureType: "administrative.land_parcel", defaultChecked: false, label: "Land Parcels", description: "" },
+              { featureType: "landscape", defaultChecked: false, label: "General Landscape", description: "" },
+              { featureType: "poi", defaultChecked: false, label: "Points of Interest", description: "" },
+              { featureType: "transit", defaultChecked: false, label: "Public Transit Features", description: "" },
+              { featureType: "water", defaultChecked: false, label: "Water Bodies", description: "" },
+            ].map(createFeatureCheckbox),
+            createMapStyleSelector()
+          );
+          tabPane.appendChild(settingsForm);
 
-        // Detect and log Google Maps API key if available
-        const googleScript = Array.from(document.querySelectorAll("script")).find((script) => script.src.includes("maps.googleapis.com"));
-        if (googleScript) {
-          const urlParams = new URL(googleScript.src);
-          const apiKey = urlParams.searchParams.get("key");
-          if (debugMode) console.log("WME GMAPS Layers: Detected Google Maps API Key:", apiKey);
-        }
+          console.log("WME GMAPS Layers: HTML elements loaded into Sidebar");
 
-        // Initialize Google Map
-        googleMap = new google.maps.Map(gmapsContainer, {
-          zoom: W.map.getZoom(),
-          center: { lat: coordinates.lat, lng: coordinates.lon },
-          disableDefaultUI: true,
-        });
+          // Create a container for Google Maps
+          gmapsContainer = document.createElement("div");
+          gmapsContainer.id = "gmapsContainer";
+          gmapsContainer.style.position = "absolute";
+          gmapsContainer.style.top = "0";
+          gmapsContainer.style.left = "0";
+          gmapsContainer.style.right = "0";
+          gmapsContainer.style.bottom = "0";
 
-        google.maps.event.addListenerOnce(googleMap, "tilesloaded", syncMapPosition);
+          const viewportElement = wmeSDK.Map.getMapViewportElement();
+          viewportElement.appendChild(gmapsContainer); // Append the gmapsContainer to the new viewport element
 
-        trafficLayer = new google.maps.TrafficLayer(); // Initialize traffic layer
-        updateMapStyles(); // Apply initial map styles
-
-        // Register events to synchronize map positions
-        WazeWrap.Events.register("moveend", null, syncMapPosition);
-        WazeWrap.Events.register("zoomend", null, syncMapPosition);
-
-        // Add a GMaps Layers checkbox in the WME layer panel
-        WazeWrap.Interface.AddLayerCheckbox(
-          "display",
-          "GMaps Layers",
-          layerActive,
-          function (checked) {
-            uiElements.layerCheckbox = document.querySelector("#layer-switcher-item_gmaps_layers");
-
-            uiElements.checkboxChangeHandler = toggleLayerState;
-            if (layerActive !== checked) {
-              toggleLayerState(checked);
+          // Detect and log Google Maps API key if available
+          if (debugMode) {
+            const googleScript = Array.from(document.querySelectorAll("script")).find((script) => script.src.includes("maps.googleapis.com"));
+            if (googleScript) {
+              const urlParams = new URL(googleScript.src);
+              const apiKey = urlParams.searchParams.get("key");
+              if (apiKey) console.log("WME GMAPS Layers: Detected Google Maps API Key:", apiKey);
             }
-          },
-          null
-        );
+          }
 
-        // Add a keyboard shortcut for toggling the GMaps layer
-        new WazeWrap.Interface.Shortcut("WMEGoogleMapsLayers", "Toggle GMaps Layers", "layers", "layersToggleWMEGoogleMapsLayers", "Alt+G", () => toggleLayerState(), null).add();
+          const center = wmeSDK.Map.getMapCenter();
+          const zoom = wmeSDK.Map.getZoomLevel();
 
-        uiElements.layerCheckbox = document.querySelector("#layer-switcher-item_gmaps_layers");
-        if (uiElements.layerCheckbox) {
-          uiElements.layerCheckbox.checked = layerActive;
-          uiElements.layerCheckbox.value = layerActive ? "on" : "off";
-        }
+          // Initialize Google Map
+          googleMap = new google.maps.Map(gmapsContainer, {
+            zoom: zoom,
+            center: { lat: center.lat, lng: center.lon },
+            disableDefaultUI: true,
+          });
 
-        updateUiAfterToggle(); // Update UI to reflect current layer state
-      })
-      .catch((error) => {
-        console.error("WME GMAPS Layers: Initialization error:", error);
-      });
-  }
+          google.maps.event.addListenerOnce(googleMap, "tilesloaded", syncMapPosition);
+          console.log("WME GMAPS Layers: Google Map via API initialized");
 
-  // Initialize the GMaps layers when WME is ready
-  if (W?.userscripts?.state?.isReady) {
-    initializeGMapsLayers();
-  } else {
-    document.addEventListener("wme-ready", initializeGMapsLayers, { once: true });
+          trafficLayer = new google.maps.TrafficLayer(); // Initialize traffic layer
+          updateMapStyles(); // Apply initial map styles
+
+          // Register events to synchronize map positions
+          wmeSDK.Events.on({ eventName: "wme-map-move", eventHandler: syncMapPosition });
+          wmeSDK.Events.on({ eventName: "wme-map-zoom-changed", eventHandler: syncMapPosition });
+
+          // Add a keyboard shortcut for toggling the GMaps layer using the SDK method
+          wmeSDK.Shortcuts.createShortcut({
+            shortcutId: "WMEGoogleMapsLayersToggle",
+            description: "Toggle GMaps Layers",
+            shortcutKeys: "A+G",
+            callback: () => {
+              const checked = !layerActive;
+              toggleLayerState(checked);
+            },
+          });
+
+          updateUiAfterToggle(); // Update UI to reflect current layer state
+          console.log("WME GMAPS Layers: Fully initialized");
+        })
+        .catch((error) => {
+          console.error("WME GMAPS Layers: Could not register sidebar tab:", error);
+        });
+    }).catch((error) => {
+      console.error("WME GMAPS Layers: SDK initialization error:", error);
+    });
   }
 
   const customStyles = document.createElement("style");
@@ -640,4 +582,11 @@ function createMapStyleSelector() {
   }
 `;
   document.head.appendChild(customStyles);
+
+  // Initialize the GMaps layers when WME is ready
+  if (window.SDK_INITIALIZED) {
+    window.addEventListener("load", initializeGMapsLayers);
+  } else {
+    document.addEventListener("wme-initialized", initializeGMapsLayers, { once: true });
+  }
 })();
