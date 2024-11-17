@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.11.04.01
+// @version      2024.11.17.01
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -60,19 +60,6 @@
       uiElements.toggleButton.classList.toggle("active", layerActive);
     }
 
-    // Update layer checkbox state
-    if (uiElements.layerCheckbox) {
-      syncChange = true;
-      if (debugMode) console.log("WME GMAPS Layers: Updating layer checkbox state to", layerActive);
-      uiElements.layerCheckbox.checked = layerActive;
-      uiElements.layerCheckbox.value = layerActive ? "on" : "off";
-      if (uiElements.checkboxChangeHandler) {
-        if (debugMode) console.log("WME GMAPS Layers: Invoking checkboxChangeHandler with value", layerActive);
-        uiElements.checkboxChangeHandler(layerActive);
-      }
-      syncChange = false;
-    }
-
     // Update Google Maps container display state
     if (gmapsContainer) {
       if (debugMode) console.log("WME GMAPS Layers: Updating gmapsContainer display to", layerActive ? "block" : "none");
@@ -90,7 +77,7 @@
       if (debugMode) console.log("WME GMAPS Layers: toggleLayerState called with newState:", newState);
       syncChange = true;
       layerActive = newState !== null ? newState : !layerActive;
-      setItem("layerActive", layerActive.toString());
+      setItem("layerActive", layerActive ? "true" : "false");
       updateUiAfterToggle();
       syncChange = false;
     }
@@ -195,7 +182,7 @@
     // Create the select element (combo box)
     const select = document.createElement("select");
     select.className = "style-selector";
-    //select.style.backgroundColor = "transparent"; 
+    //select.style.backgroundColor = "transparent";
     select.addEventListener("change", function () {
       setItem("selectedMapStyle", this.value);
       updateMapStyles();

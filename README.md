@@ -15,17 +15,17 @@
 
 ## Installation
 
-To install this user script, you need to have a userscript manager installed in your browser (such as Tampermonkey or Greasemonkey).
+To install this user script, you need to have a user script manager installed in your browser (such as Tamper monkey or Grease monkey).
 
-### Tampermonkey (Recommended)
+### Tamper monkey (Recommended)
 
-1. **Install Tampermonkey**:
-   - [Tampermonkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-   - [Tampermonkey for Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
+1. **Install Tamper monkey**:
+   - [Tamper monkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
+   - [Tamper monkey for Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
    - [Other browsers](https://www.tampermonkey.net/)
 
 2. **Add the Script via URL**:
-   - **Open the Tampermonkey dashboard** by clicking on the Tampermonkey icon in your browser toolbar and selecting "Dashboard".
+   - **Open the Tamper monkey dashboard** by clicking on the Tamper monkey icon in your browser toolbar and selecting "Dashboard".
    - In the dashboard, click on the tab that says "Utilities".
    - In the "Import from URL" section, paste the following URL:
 
@@ -34,10 +34,10 @@ To install this user script, you need to have a userscript manager installed in 
    - Click on the "Import" button.
    - You will be directed to a page that shows the script. Click the "Install" button.
 
-### Greasemonkey
+### Grease monkey
 
-1. **Install Greasemonkey**:
-   - [Greasemonkey for Firefox](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)
+1. **Install Grease monkey**:
+   - [Grease monkey for Firefox](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)
 
 2. [Click here to install WME GMAPS Layers](https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js)
 
@@ -64,7 +64,7 @@ The script provides several configuration options directly within the WME interf
   - Public Transit Features
   - Water Bodies
 - **Customize May Style:**
-  - Standered
+  - Slandered
   - Dark / Night
   - Silver
   - Retro
