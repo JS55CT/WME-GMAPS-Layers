@@ -17,7 +17,7 @@
   "use strict";
 
   // Configuration
-  const debugMode = true; // Debug mode flag
+  const debugMode = false; // Debug mode flag
   const scriptMetadata = GM_info.script; // Metadata for the script
   const storageKey = "WMEGMAPSLayerState"; // Key for storing state in localStorage
   let wmeSDK, googleMap, trafficLayer, gmapsContainer;
