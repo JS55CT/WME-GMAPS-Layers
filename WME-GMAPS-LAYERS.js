@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://github.com/JS55CT
-// @version      2024.11.17.01
+// @version      2024.11.17.02
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
@@ -17,18 +17,13 @@
   "use strict";
 
   // Configuration
-  const debugMode = false; // Debug mode flag
+  const debugMode = true; // Debug mode flag
   const scriptMetadata = GM_info.script; // Metadata for the script
   const storageKey = "WMEGMAPSLayerState"; // Key for storing state in localStorage
   let wmeSDK, googleMap, trafficLayer, gmapsContainer;
   let layerActive = getItem("layerActive", "false") === "true"; // Layer activation status
   let syncChange = false; // Flag to avoid sync issues during state changes
-
-  const uiElements = {
-    toggleButton: null,
-    layerCheckbox: null,
-    checkboxChangeHandler: null,
-  };
+  let toggleButton = null;
 
   // Utility functions for localStorage management
   function getStorageData() {
@@ -52,12 +47,10 @@
 
   // Function to update UI elements after toggling the layer
   function updateUiAfterToggle() {
-    if (debugMode) console.log("WME GMAPS Layers: updateUiAfterToggle() with value", layerActive);
-
     // Update toggle button state
-    if (uiElements.toggleButton) {
+    if (toggleButton) {
       if (debugMode) console.log("WME GMAPS Layers: Updating toggle button state to", layerActive);
-      uiElements.toggleButton.classList.toggle("active", layerActive);
+      toggleButton.classList.toggle("active", layerActive);
     }
 
     // Update Google Maps container display state
@@ -118,7 +111,7 @@
       })
     );
 
-    uiElements.toggleButton = toggle;
+    toggleButton = toggle;
     return container;
   }
 
