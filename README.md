@@ -40,7 +40,7 @@ The script provides several configuration options directly within the WME interf
   - Public Transit Features
   - Water Bodies
 - **Customize May Style:**
-  - Slandered
+  - Standard
   - Dark / Night
   - Silver
   - Retro
