@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
-// @namespace    https://github.com/JS55CT
-// @version      2024.11.17.02
+// @namespace    https://greasyfork.org/en/users/1366579-js55ct
+// @version      2024.11.25.01
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
-// @downloadURL  https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
-// @updateURL    https://github.com/JS55CT/WME-GMAPS-Layers/raw/main/WME-GMAPS-LAYERS.js
 // @license      MIT
 // @match        https://*.waze.com/*/editor*
 // @match        https://*.waze.com/editor
 // @exclude      https://*.waze.com/user/editor*
 // @grant        none
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
+// @downloadURL  https://update.greasyfork.org/scripts/518808/WME%20GMAPS%20Layers.user.js
+// @updateURL    https://update.greasyfork.org/scripts/518808/WME%20GMAPS%20Layers.meta.js
 // ==/UserScript==
 
 (function () {
@@ -301,7 +301,7 @@
     const selectedStyleType = document.querySelector(".style-selector").value;
     const selectedStyle = mapStyles[selectedStyleType] || [];
 
-    // Collect layers that should be visable from checkboxes
+    // Collect layers that should be visible from checkboxes
     const customStyles = Array.from(document.querySelectorAll(".style-checkbox"))
       .filter((checkbox) => checkbox.checked)
       .filter((checkbox) => checkbox.dataset.featureType !== "traffic") // Exclude traffic as it's not a GMAPS Base feature type
@@ -317,7 +317,7 @@
     // Apply all Map Layers & styles to the Google Map
     googleMap.setOptions({ styles: [...selectedStyle, ...baseMapStyles, ...customStyles] });
 
-    // Tuen off gmapsContainer's interactions so we can still interact with WME Layers
+    // Turn off gmapsContainer's interactions so we can still interact with WME Layers
     gmapsContainer.style.pointerEvents = "none";
     if (gmapsContainer.firstElementChild) {
       gmapsContainer.firstElementChild.style.backgroundColor = "rgb(229 227 223 / 0%)";
@@ -378,7 +378,7 @@
         .then(({ tabLabel, tabPane }) => {
           tabLabel.innerText = "GMAP";
 
-          console.log("WME GMAPS Layers: GMAP Sidebar Tab successfuly created");
+          console.log("WME GMAPS Layers: GMAP Sidebar Tab successfully created");
           const settingsForm = document.createElement("form");
           settingsForm.className = "settings-form";
 

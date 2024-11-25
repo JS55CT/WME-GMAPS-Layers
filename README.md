@@ -17,30 +17,6 @@
 
 To install this user script, you need to have a user script manager installed in your browser (such as Tamper monkey or Grease monkey).
 
-### Tamper monkey (Recommended)
-
-1. **Install Tamper monkey**:
-   - [Tamper monkey for Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-   - [Tamper monkey for Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
-   - [Other browsers](https://www.tampermonkey.net/)
-
-2. **Add the Script via URL**:
-   - **Open the Tamper monkey dashboard** by clicking on the Tamper monkey icon in your browser toolbar and selecting "Dashboard".
-   - In the dashboard, click on the tab that says "Utilities".
-   - In the "Import from URL" section, paste the following URL:
-
-     ``` https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js ```
-
-   - Click on the "Import" button.
-   - You will be directed to a page that shows the script. Click the "Install" button.
-
-### Grease monkey
-
-1. **Install Grease monkey**:
-   - [Grease monkey for Firefox](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)
-
-2. [Click here to install WME GMAPS Layers](https://raw.githubusercontent.com/JS55CT/WME-GMAPS-Layers/main/WME-GMAPS-LAYERS.js)
-
 ## Usage
 
 Once installed, follow these steps to use the user script within the Waze Map Editor:
@@ -79,6 +55,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Thanks to WazeWrap for providing a robust interface to integrate with WME.
 - Inspired by the need for better integration between GMAPS and Waze for enhanced map editing capabilities.
 
+## Source Code Management
+[JS55CT Github](https://github.com/JS55CT/WME-GMAPS-Layers)
 ---
 
 **Note:** This script comes with no warranty or guarantee. Use it at your own risk. Please adhere to GMAPS and Waze terms of service while using this script.
