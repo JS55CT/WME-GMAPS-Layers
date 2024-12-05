@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME GMAPS Layers
 // @namespace    https://greasyfork.org/en/users/1366579-js55ct
-// @version      2024.11.25.01
+// @version      2024.12.05.01
 // @description  Adds GMAPS Layers (Roads and Traffic, Landscape, Transit, Water) layers as an overlay in Waze Map Editor
 // @license      MIT
 // @match        https://*.waze.com/*/editor*
@@ -414,11 +414,20 @@
 
           // Detect and log Google Maps API key if available
           if (debugMode) {
-            const googleScript = Array.from(document.querySelectorAll("script")).find((script) => script.src.includes("maps.googleapis.com"));
-            if (googleScript) {
+            const googleScripts = Array.from(document.querySelectorAll("script"))
+              .filter(script => script.src.includes("maps.googleapis.com"));
+          
+            googleScripts.forEach((googleScript, index) => {
               const urlParams = new URL(googleScript.src);
               const apiKey = urlParams.searchParams.get("key");
-              if (apiKey) console.log("WME GMAPS Layers: Detected Google Maps API Key:", apiKey);
+              if (apiKey) {
+                console.log(`WME GMAPS Layers: Detected Google Maps API Key in script ${index + 1}:`, apiKey);
+                console.log(`Script source: ${googleScript.src}`);
+              }
+            });
+          
+            if (!googleScripts.length) {
+              console.log("No Google Maps API scripts found in the document.");
             }
           }
 
